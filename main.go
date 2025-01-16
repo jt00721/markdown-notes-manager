@@ -31,8 +31,7 @@ func getNoteInput() (string, string) {
 	return title, content.String()
 }
 
-func saveNoteToFile(title, content string) {
-	filename := fmt.Sprintf("notes/%s.md", sanitizeTitle(title))
+func saveNoteToFile(filename, content string) {
 	ensureNotesDir()
 	file, err := os.Create(filename)
 	if err != nil {
@@ -48,7 +47,7 @@ func saveNoteToFile(title, content string) {
 		return
 	}
 
-	fmt.Printf("Note %s successfully saved at %s\n", title, filename)
+	fmt.Printf("Note successfully saved at %s\n", filename)
 }
 
 func sanitizeTitle(title string) string {
@@ -67,7 +66,24 @@ func ensureNotesDir() {
 	}
 }
 
+func getUniqueFilename(title string) string {
+	base := sanitizeTitle(title)
+	filename := fmt.Sprintf("notes/%s.md", base)
+
+	counter := 1
+	for {
+		if _, err := os.Stat(filename); os.IsNotExist(err) {
+			break
+		}
+		filename = fmt.Sprintf("notes/%s_%d.md", base, counter)
+		counter++
+	}
+
+	return filename
+}
+
 func main() {
 	title, content := getNoteInput()
-	saveNoteToFile(title, content)
+	filename := getUniqueFilename(title)
+	saveNoteToFile(filename, content)
 }
