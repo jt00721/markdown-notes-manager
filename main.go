@@ -31,7 +31,35 @@ func getNoteInput() (string, string) {
 	return title, content.String()
 }
 
+func saveNoteToFile(title, content string) {
+	filename := fmt.Sprintf("notes/%s.md", sanitizeTitle(title))
+	file, err := os.Create(filename)
+	if err != nil {
+		fmt.Println("Error creating file:", err)
+		return
+	}
+
+	defer file.Close()
+
+	_, err = file.WriteString(content)
+	if err != nil {
+		fmt.Println("Error writing to file:", err)
+		return
+	}
+
+	fmt.Printf("Note %s successfully saved at %s\n", title, filename)
+}
+
+func sanitizeTitle(title string) string {
+	return strings.ReplaceAll(strings.Map(func(r rune) rune {
+		if strings.ContainsRune(" abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-", r) {
+			return r
+		}
+		return -1
+	}, title), " ", "_")
+}
+
 func main() {
 	title, content := getNoteInput()
-	fmt.Printf("Title: %s\n\nContent: \n%s\n", title, content)
+	saveNoteToFile(title, content)
 }
