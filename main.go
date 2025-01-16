@@ -33,6 +33,7 @@ func getNoteInput() (string, string) {
 
 func saveNoteToFile(title, content string) {
 	filename := fmt.Sprintf("notes/%s.md", sanitizeTitle(title))
+	ensureNotesDir()
 	file, err := os.Create(filename)
 	if err != nil {
 		fmt.Println("Error creating file:", err)
@@ -57,6 +58,13 @@ func sanitizeTitle(title string) string {
 		}
 		return -1
 	}, title), " ", "_")
+}
+
+func ensureNotesDir() {
+	err := os.MkdirAll("notes", os.ModePerm)
+	if err != nil {
+		fmt.Println("Error creating notes directory:", err)
+	}
 }
 
 func main() {
