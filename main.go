@@ -145,6 +145,86 @@ func openInBrowser(content string) {
 	exec.Command("open", "preview.html").Start()
 }
 
+func editNoteInline(title string) {
+	filename := fmt.Sprintf("notes/%s.md", sanitizeTitle(title))
+
+	// Check if the file exists
+	if _, err := os.Stat(filename); os.IsNotExist(err) {
+		fmt.Printf("The note '%s' does not exist.\n", title)
+		return
+	}
+
+	// Read and display the current content
+	currentContent, err := os.ReadFile(filename)
+	if err != nil {
+		fmt.Println("Error reading the note:", err)
+		return
+	}
+	fmt.Println("Current Content:")
+	fmt.Println(string(currentContent))
+
+	// Collect updated content
+	reader := bufio.NewReader(os.Stdin)
+	fmt.Println("Enter new content for the note (type 'END' on a new line to finish):")
+	var updatedContent strings.Builder
+	for {
+		line, _ := reader.ReadString('\n')
+		if strings.TrimSpace(line) == "END" {
+			break
+		}
+		updatedContent.WriteString(line)
+	}
+
+	if strings.TrimSpace(updatedContent.String()) == "" {
+		fmt.Println("Cannot save an empty note. Changes discarded.")
+		return
+	}
+
+	backupNote(filename)
+
+	// Save the updated content
+	err = os.WriteFile(filename, []byte(updatedContent.String()), 0644)
+	if err != nil {
+		fmt.Println("Error saving the note:", err)
+		return
+	}
+	fmt.Printf("The note '%s' has been updated successfully.\n", title)
+}
+
+func editNoteWithEditor(title string) {
+	filename := fmt.Sprintf("notes/%s.md", sanitizeTitle(title))
+
+	// Check if the file exists
+	if _, err := os.Stat(filename); os.IsNotExist(err) {
+		fmt.Printf("The note '%s' does not exist.\n", title)
+		return
+	}
+
+	backupNote(filename)
+
+	// Launch the default editor
+	cmd := exec.Command("nano", filename)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	if err := cmd.Run(); err != nil {
+		fmt.Println("Error opening the editor:", err)
+		return
+	}
+	fmt.Printf("The note '%s' has been updated.\n", title)
+}
+
+func backupNote(filename string) {
+	backupFilename := fmt.Sprintf("%s.bak", filename)
+	input, err := os.ReadFile(filename)
+	if err != nil {
+		fmt.Println("Error creating backup:", err)
+		return
+	}
+	os.WriteFile(backupFilename, input, 0644)
+}
+
 func displayMenu() {
 	fmt.Println("\nMarkdown Note Manager")
 	fmt.Println("=====================")
@@ -153,6 +233,7 @@ func displayMenu() {
 	fmt.Println("3. Edit a note")
 	fmt.Println("4. List all notes")
 	fmt.Println("5. Search notes")
+	fmt.Println("6. Exit")
 	fmt.Print("\nSelect an option (1-6): ")
 }
 
@@ -177,12 +258,37 @@ func main() {
 
 			viewNote(title)
 		case "3":
-			fmt.Println("Edit a note...")
+			reader := bufio.NewReader(os.Stdin)
+			fmt.Println("1. Edit note inline")
+			fmt.Println("2. Edit note with editor")
+			fmt.Print("\nSelect an option (1-2): ")
+			input, _ := reader.ReadString('\n')
+			input = strings.TrimSpace(input)
+
+			switch input {
+			case "1":
+				reader := bufio.NewReader(os.Stdin)
+
+				fmt.Print("Enter note title to edit inline: ")
+				title, _ := reader.ReadString('\n')
+				title = strings.TrimSpace(title)
+
+				editNoteInline(title)
+			case "2":
+				reader := bufio.NewReader(os.Stdin)
+
+				fmt.Print("Enter note title to edit with editor: ")
+				title, _ := reader.ReadString('\n')
+				title = strings.TrimSpace(title)
+
+				editNoteWithEditor(title)
+			default:
+				fmt.Println("Invalid choice. Please select a valid option (1-2).")
+			}
 		case "4":
 			fmt.Println("List all notes...")
 		case "5":
 			fmt.Println("Searching for note...")
-			return
 		case "6":
 			fmt.Println("Exiting")
 			return
