@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"github.com/yuin/goldmark"
@@ -225,6 +226,75 @@ func backupNote(filename string) {
 	os.WriteFile(backupFilename, input, 0644)
 }
 
+func listNotes() {
+	files, err := os.ReadDir("notes")
+	if err != nil {
+		fmt.Println("Error reading notes directory:", err)
+		return
+	}
+
+	if len(files) == 0 {
+		fmt.Println("No notes found.")
+		return
+	}
+
+	fmt.Println("\nYour Notes:")
+	for _, file := range files {
+		title := strings.TrimSuffix(file.Name(), filepath.Ext(file.Name()))
+		fmt.Println("- " + title)
+	}
+}
+
+func searchByTitle(query string) {
+	files, err := os.ReadDir("notes")
+	if err != nil {
+		fmt.Println("Error reading notes directory:", err)
+		return
+	}
+
+	fmt.Printf("Searching for notes with titles containing '%s':\n", query)
+	found := false
+	for _, file := range files {
+		title := strings.TrimSuffix(file.Name(), filepath.Ext(file.Name()))
+		if strings.Contains(strings.ToLower(title), strings.ToLower(query)) {
+			fmt.Println("- " + title)
+			found = true
+		}
+	}
+
+	if !found {
+		fmt.Println("No notes found with the specified title.")
+	}
+}
+
+func searchByContent(query string) {
+	files, err := os.ReadDir("notes")
+	if err != nil {
+		fmt.Println("Error reading notes directory:", err)
+		return
+	}
+
+	fmt.Printf("Searching for notes with content containing '%s':\n", query)
+	found := false
+	for _, file := range files {
+		content, err := os.ReadFile("notes/" + file.Name())
+		if err != nil {
+			fmt.Println("Error reading file:", file.Name())
+			continue
+		}
+
+		if strings.Contains(strings.ToLower(string(content)), strings.ToLower(query)) {
+			title := strings.TrimSuffix(file.Name(), filepath.Ext(file.Name()))
+			fmt.Println("- " + title)
+			found = true
+		}
+	}
+
+	if !found {
+		fmt.Println("No notes found with the specified content.")
+	}
+}
+
 func displayMenu() {
 	fmt.Println("\nMarkdown Note Manager")
 	fmt.Println("=====================")
@@ -286,9 +356,35 @@ func main() {
 				fmt.Println("Invalid choice. Please select a valid option (1-2).")
 			}
 		case "4":
-			fmt.Println("List all notes...")
+			listNotes()
 		case "5":
-			fmt.Println("Searching for note...")
+			reader := bufio.NewReader(os.Stdin)
+			fmt.Println("1. Search for note title")
+			fmt.Println("2. Search for note content")
+			fmt.Print("\nSelect an option (1-2): ")
+			input, _ := reader.ReadString('\n')
+			input = strings.TrimSpace(input)
+
+			switch input {
+			case "1":
+				reader := bufio.NewReader(os.Stdin)
+
+				fmt.Print("Enter note title to search: ")
+				title, _ := reader.ReadString('\n')
+				title = strings.TrimSpace(title)
+
+				searchByTitle(title)
+			case "2":
+				reader := bufio.NewReader(os.Stdin)
+
+				fmt.Print("Enter note content to search: ")
+				query, _ := reader.ReadString('\n')
+				query = strings.TrimSpace(query)
+
+				searchByContent(query)
+			default:
+				fmt.Println("Invalid choice. Please select a valid option (1-2).")
+			}
 		case "6":
 			fmt.Println("Exiting")
 			return
