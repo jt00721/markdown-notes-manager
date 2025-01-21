@@ -145,20 +145,51 @@ func openInBrowser(content string) {
 	exec.Command("open", "preview.html").Start()
 }
 
+func displayMenu() {
+	fmt.Println("\nMarkdown Note Manager")
+	fmt.Println("=====================")
+	fmt.Println("1. Create a new note")
+	fmt.Println("2. View a note")
+	fmt.Println("3. Edit a note")
+	fmt.Println("4. List all notes")
+	fmt.Println("5. Search notes")
+	fmt.Print("\nSelect an option (1-6): ")
+}
+
 func main() {
-	// ensureNotesDir()
+	reader := bufio.NewReader(os.Stdin)
+	for {
+		displayMenu()
+		choice, _ := reader.ReadString('\n')
+		choice = strings.TrimSpace(choice)
 
-	// title, content := getNoteInput()
-	// filename := getUniqueFilename(title)
-	// saveNoteToFile(filename, content)
+		switch choice {
+		case "1":
+			title, content := getNoteInput()
+			filename := getUniqueFilename(title)
+			saveNoteToFile(filename, content)
+		case "2":
+			reader := bufio.NewReader(os.Stdin)
 
-	// reader := bufio.NewReader(os.Stdin)
+			fmt.Print("Enter note title to read: ")
+			title, _ := reader.ReadString('\n')
+			title = strings.TrimSpace(title)
 
-	// fmt.Print("Enter note title to read: ")
-	// title, _ := reader.ReadString('\n')
-	// title = strings.TrimSpace(title)
+			viewNote(title)
+		case "3":
+			fmt.Println("Edit a note...")
+		case "4":
+			fmt.Println("List all notes...")
+		case "5":
+			fmt.Println("Searching for note...")
+			return
+		case "6":
+			fmt.Println("Exiting")
+			return
+		default:
+			fmt.Println("Invalid choice. Please select a valid option (1-6).")
+		}
+	}
 
-	// viewNote(title)
-
-	openInBrowser(readFile("notes/My_Note.md"))
+	// openInBrowser(readFile("notes/My_Note.md"))
 }
